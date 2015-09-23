@@ -1,0 +1,106 @@
+<html><head><meta charset="utf-8">
+<style>
+
+circle {
+  fill: rgb(31, 119, 180);
+  fill-opacity: .25;
+  stroke: rgb(31, 119, 180);
+  stroke-width: 1px;
+}
+
+.leaf circle {
+  fill: #ff7f0e;
+  fill-opacity: 1;
+}
+
+text {
+  font: 10px sans-serif;
+}
+
+</style>
+</head><body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+</body>
+<script>
+var diameter = 960,
+    format = d3.format(",d");
+
+var pack = d3.layout.pack()
+    .size([diameter - 4, diameter - 4])
+    .value(function(d) { return d.size; });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", diameter)
+    .attr("height", diameter)
+  .append("g")
+    .attr("transform", "translate(2,2)");
+
+var node;
+var currentJson;
+var currentUrl = "data1.json";
+
+var getNewData = function() {
+
+    if(currentUrl == "data1.json") {
+        currentUrl = "data2.json";
+        currentJson = {
+    "name": "Names",
+    "children": [
+        { "name": "John", "size": 100 },
+        { "name": "Peter", "size": 200 },
+        { "name": "Arnold", "size": 300 },
+        { "name": "Rasmus", "size": 400 }
+    ]
+};
+    }
+    else {
+        currentUrl = "data1.json";
+  		currentJson = {
+    "name": "Names",
+    "children": [
+        { "name": "John", "size": 1000 },
+        { "name": "Rasmus", "size": 200 },
+        { "name": "Benjamin", "size": 300 },
+        { "name": "James", "size": 400 }
+    ]
+};
+    }
+
+    // d3.json(currentUrl, function(error, data) {
+    //     currentJson = data;
+    //     refresh();
+    // });
+refresh();
+}
+
+var refresh = function() {
+
+    node = svg.selectAll(".node")
+                    .data(pack.nodes(currentJson));
+
+    node.enter().append("g")
+            .classed("node", true)
+            .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; })
+        .append("circle")
+            .attr("r", 0)
+            .on("click", getNewData)
+            .transition()
+            .duration(2000)
+            .attr("r", function(d) { return d.r; });
+
+    node.transition()
+        .duration(2000)
+        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+    node.select("circle")
+        .transition()
+        .duration(2000)
+        .attr("r", function(d) { return d.r; });
+}
+
+d3.select(self.frameElement).style("height", diameter + "px");
+
+getNewData();
+</script>
+</html>

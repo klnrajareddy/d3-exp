@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+circle {
+  fill: rgb(31, 119, 180);
+  fill-opacity: .25;
+  stroke: rgb(31, 119, 180);
+  stroke-width: 1px;
+}
+
+.leaf circle {
+  fill: #ff7f0e;
+  fill-opacity: 1;
+}
+
+text {
+  font: 10px sans-serif;
+}
+
+th { text-align: left; }
+th, td { padding: 0 1em 0.5ex 0;}
+th.center, td.center { text-align: center; }
+th.num, td.num { text-align: right; }
+</style>
+
+<body>
+
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+<script>
+var regionWise = {
+  children : [
+    {
+        "region" : "AP",
+        "categories" : [
+                          {
+                            "LoanType" : "HomeLoan",
+                            "Number" : 25
+                          }, 
+                          { 
+                            "LoanType" : "EducationLoan",
+                            "Number" : 50
+                          },
+                          {
+                            "LoanType" : "VehicleLoan",
+                            "Number" : 20
+                          }, 
+                          {
+                            "LoanType" : "PersonalLoan",
+                            "Number" : 5
+                          }
+                        ]
+    },
+    {
+        "region" : "BH",
+        "categories" : [
+                          {
+                            "LoanType" : "HomeLoan",
+                            "Number" : 125
+                          }, 
+                          { 
+                            "LoanType" : "EducationLoan",
+                            "Number" : 150
+                          },
+                          {
+                            "LoanType" : "VehicleLoan",
+                            "Number" : 120
+                          }, 
+                          {
+                            "LoanType" : "PersonalLoan",
+                            "Number" : 15
+                          }
+                        ]
+    },
+    {
+        "region" : "CG",
+        "categories" : [
+                          {
+                            "LoanType" : "HomeLoan",
+                            "Number" : 12
+                          }, 
+                          { 
+                            "LoanType" : "EducationLoan",
+                            "Number" : 25
+                          },
+                          {
+                            "LoanType" : "VehicleLoan",
+                            "Number" : 10
+                          }, 
+                          {
+                            "LoanType" : "PersonalLoan",
+                            "Number" : 3
+                          }
+                        ]
+    },
+    {
+        "region" : "DL",
+        "categories" : [
+                          {
+                            "LoanType" : "HomeLoan",
+                            "Number" : 100
+                          }, 
+                          { 
+                            "LoanType" : "EducationLoan",
+                            "Number" : 75
+                          },
+                          {
+                            "LoanType" : "VehicleLoan",
+                            "Number" : 60
+                          }, 
+                          {
+                            "LoanType" : "PersonalLoan",
+                            "Number" : 30
+                          }
+                        ]
+    },
+    {
+        "region" : "MP",
+        "categories" : [
+                          {
+                            "LoanType" : "HomeLoan",
+                            "Number" : 10
+                          }, 
+                          { 
+                            "LoanType" : "EducationLoan",
+                            "Number" : 10
+                          },
+                          {
+                            "LoanType" : "VehicleLoan",
+                            "Number" : 10
+                          }, 
+                          {
+                            "LoanType" : "PersonalLoan",
+                            "Number" : 10
+                          }
+                        ]
+    }
+  ]
+};
+
+var allLoanTypes = new Set();
+
+for(var i=0;i<regionWise.children.length;i++) {
+    for(var j=0;j<regionWise.children[i].categories.length;j++) {
+        allLoanTypes.add(regionWise.children[i].categories[j].LoanType);
+    }
+}
+
+allLoanTypes = Array.from(allLoanTypes);
+allLoanTypes.unshift("");
+var table = d3.select("body").append("table");
+var header = table.append("tr");
+header.selectAll("th").data(allLoanTypes).enter().append("th").text(function(d) {return d;});
+
+for(var i=0; i< regionWise.children.length;i++) {
+  var region = regionWise.children[i].region;
+  var loans = regionWise.children[i].categories;  
+  var tr = table.append("tr");
+  var rowData = [];
+  rowData.push(region);
+  for(var j=1;j<allLoanTypes.length;j++) {
+    var currentLoanType = allLoanTypes[j];
+    for(var k=0;k<loans.length;k++) {
+        console.log("Comparing " + loans[k].LoanType + " and " + currentLoanType);
+        if(loans[k].LoanType == currentLoanType) {
+          rowData.push(loans[k].Number);
+          break;
+        }
+    }
+  }
+  tr.selectAll("td").data(rowData).enter().append("td").text(function(d) {return d;});
+}
+
+table.append("tr");
+
+var diameter = 200,
+    format = d3.format(",d");
+
+var pack = d3.layout.pack()
+    .size([diameter - 4, diameter - 4])
+    .value(function(d) { var total=0; for(var i=0;i<d.categories.length;i++) { total+=d.categories[i].Number; } return total;
+      
+    });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", diameter)
+    .attr("height", diameter)
+  .append("g")
+    .attr("transform", "translate(2,2)");
+
+  var node = svg.datum(regionWise).selectAll(".node")
+      .data(pack.nodes)
+    .enter().append("g")
+      .attr("class", function(d) { return d.children ? "node" : "leaf node"; })
+      .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+  node.append("title")
+      .text(function(d) { return d.region; });
+
+  node.append("circle")
+      .attr("r", function(d) { return d.r; }).on("click", function(d, i){refreshChildren(d.categories, d.region);});
+
+  node.append("text")
+      .attr("dy", ".3em")
+      .style("text-anchor", "middle")
+      .text(function(d) { if(!d.region) return; else return d.region;});
+
+var childrenDiameter = 400;
+var childPack = d3.layout.pack()
+    .size([childrenDiameter - 4, childrenDiameter - 4])
+    .value(function(d) { 
+        return d.Number;
+    });
+//d3.select("body").append("div");
+var childsvg = d3.select("body").append("svg")
+    .attr("width", childrenDiameter)
+    .attr("height", childrenDiameter)
+  .append("g")
+    .attr("transform", "translate(2,2)");
+var templateData = {children:[
+                          {
+                            "LoanType" : "HomeLoan",
+                            "Number" : 1000
+                          }, 
+                          { 
+                            "LoanType" : "EducationLoan",
+                            "Number" : 750
+                          },
+                          {
+                            "LoanType" : "VehicleLoan",
+                            "Number" : 600
+                          }, 
+                          {
+                            "LoanType" : "PersonalLoan",
+                            "Number" : 300
+                          }
+                        ]};
+
+function refreshChildren(loans, region) {
+  console.log("Refreshing children");
+  templateData.children = loans;
+  /*var node = childsvg.datum(templateData).selectAll(".node")
+      .data(childPack.nodes);*/
+  var node = childsvg.selectAll(".node")
+                    .data(childPack.nodes(templateData));      
+    
+  var gNodes =   node.enter().append("g")
+      .attr("class", function(d) { return d.children ? "node" : "leaf node"; })
+      .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+      
+      gNodes.append("circle").attr("r", "0")
+      .transition().duration(2000)
+      .attr("r", function(d) { return d.r; });
+
+    gNodes.append("title").text(function(d) { return d.LoanType; });
+    gNodes.append("text")
+      .attr("dy", ".3em")
+      .style("text-anchor", "middle")
+      .text(function(d) { if(!d.LoanType) return; else return d.LoanType + "(" + d.Number + ")";});
+
+    node.transition()
+        .duration(2000)
+        .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+    node.select("circle")
+        .transition()
+        .duration(2000)
+        .attr("r", function(d) { return d.r; });
+
+    node.select("text")
+      .transition()
+      .attr("dy", ".3em")
+      .style("text-anchor", function(d) { if(d.LoanType) return "middle"; else return "start";})
+      .text(function(d) { if(!d.LoanType) return region; else return d.LoanType + "(" + d.Number + ")";});
+
+
+/*  node.append("title")
+      .text(function(d) { return d.LoanType; });
+
+  node.append("circle")
+      .attr("r", function(d) { return d.r; });
+
+  node.append("text")
+      .attr("dy", ".3em")
+      .style("text-anchor", "middle")
+      .text(function(d) { if(!d.LoanType) return; else return d.LoanType;});
+
+  var modifiedNodes = node.transition().select("circle").style("fill", "green");*/
+}
+
+//d3.select(self.frameElement).style("height", diameter + "px");
+
+</script>
