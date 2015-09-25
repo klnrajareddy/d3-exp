@@ -29,7 +29,6 @@ td, th {
 }
 th {
   background: lightblue;
-  border-color: white;
 }
 body {
   padding: 1rem;
@@ -150,6 +149,10 @@ var regionWise = {
                             "LoanType" : "PersonalLoan",
                             "Number" : 10
                           },
+                          {
+                            "LoanType" : "AgriLoan",
+                            "Number" : 30
+                          }
                         ]
     }
   ]
@@ -176,13 +179,18 @@ for(var i=0; i< regionWise.children.length;i++) {
   var rowData = [];
   rowData.push(region);
   for(var j=1;j<allLoanTypes.length;j++) {
+    var noValue = true;
     var currentLoanType = allLoanTypes[j];
     for(var k=0;k<loans.length;k++) {
         console.log("Comparing " + loans[k].LoanType + " and " + currentLoanType);
         if(loans[k].LoanType == currentLoanType) {
           rowData.push(loans[k].Number);
+          noValue = false;
           break;
         }
+    }
+    if(noValue) {
+      rowData.push("");
     }
   }
   tr.selectAll("td").data(rowData).enter().append("td").text(function(d) {return d;});
@@ -294,6 +302,8 @@ function refreshChildren(loans, region, total) {
         .duration(2000)
         .attr("r", function(d) { return d.r; })
         .style("fill", function(d) { return color(d.Number/total); });
+
+    node.exit().transition().duration(1000).remove();
 
     node.select("text")
       .transition()
