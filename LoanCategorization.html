@@ -4,24 +4,40 @@
 
 circle {
   fill: rgb(31, 119, 180);
-  fill-opacity: .25;
+  fill-opacity: 0;
   stroke: rgb(31, 119, 180);
   stroke-width: 1px;
 }
 
+
+
 .leaf circle {
   fill: #ff7f0e;
   fill-opacity: 1;
+  stroke-width: 0px;
 }
 
 text {
   font: 10px sans-serif;
 }
 
-th { text-align: left; }
-th, td { padding: 0 1em 0.5ex 0;}
-th.center, td.center { text-align: center; }
-th.num, td.num { text-align: right; }
+td, th {
+  width: 4rem;
+  height: 2rem;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+th {
+  background: lightblue;
+  border-color: white;
+}
+body {
+  padding: 1rem;
+}
+table {
+  border-collapse: collapse;
+  border-spacing: 0.5rem;
+}
 </style>
 
 <body>
@@ -133,7 +149,7 @@ var regionWise = {
                           {
                             "LoanType" : "PersonalLoan",
                             "Number" : 10
-                          }
+                          },
                         ]
     }
   ]
@@ -177,6 +193,8 @@ table.append("tr");
 var diameter = 200,
     format = d3.format(",d");
 
+var color = d3.scale.category20c();
+
 var pack = d3.layout.pack()
     .size([diameter - 4, diameter - 4])
     .value(function(d) { var total=0; for(var i=0;i<d.categories.length;i++) { total+=d.categories[i].Number; } return total;
@@ -199,7 +217,15 @@ var svg = d3.select("body").append("svg")
       .text(function(d) { return d.region; });
 
   node.append("circle")
-      .attr("r", function(d) { return d.r; }).on("click", function(d, i){refreshChildren(d.categories, d.region);});
+      .attr("r", function(d) { return d.r; }).on("click", function(d, i){
+            var total=0; 
+            for(var i=0;i<d.categories.length;i++) {
+             total+=d.categories[i].Number;
+            }        
+            refreshChildren(d.categories, d.region, total);
+      }).style("fill", function(d) { 
+        return color(d.region);
+      });
 
   node.append("text")
       .attr("dy", ".3em")
@@ -237,7 +263,7 @@ var templateData = {children:[
                           }
                         ]};
 
-function refreshChildren(loans, region) {
+function refreshChildren(loans, region, total) {
   console.log("Refreshing children");
   templateData.children = loans;
   /*var node = childsvg.datum(templateData).selectAll(".node")
@@ -266,7 +292,8 @@ function refreshChildren(loans, region) {
     node.select("circle")
         .transition()
         .duration(2000)
-        .attr("r", function(d) { return d.r; });
+        .attr("r", function(d) { return d.r; })
+        .style("fill", function(d) { return color(d.Number/total); });
 
     node.select("text")
       .transition()
